@@ -37,17 +37,17 @@ instance ( HasConfiguration
          , Bi BlockHeader
          , Bi (BodyProof MainBlockchain)
          , IsMainHeader (GenericBlockHeader MainBlockchain)) =>
-         Blockchain MainBlockchain where
+         Blockchain (MainBlockchain v) where
 
     -- | Proof of everything contained in the payload.
-    data BodyProof MainBlockchain = MainProof
+    data BodyProof (MainBlockchain v) = MainProof
         { mpTxProof       :: !TxProof
         , mpMpcProof      :: !SscProof
-        , mpProxySKsProof :: !(Hash DlgPayload)
+        , mpProxySKsProof :: !(Hash (DlgPayload v))
         , mpUpdateProof   :: !UpdateProof
         } deriving (Eq, Show, Generic)
 
-    data ConsensusData MainBlockchain = MainConsensusData
+    data ConsensusData (MainBlockchain v) = MainConsensusData
         { -- | Id of the slot for which this block was generated.
           _mcdSlot       :: !SlotId
         , -- | Public key of the slot leader. It's essential to have it here,
@@ -59,12 +59,12 @@ instance ( HasConfiguration
           _mcdSignature  :: !BlockSignature
         } deriving (Generic, Show, Eq)
 
-    type BBlockHeader MainBlockchain = BlockHeader
-    type ExtraHeaderData MainBlockchain = MainExtraHeaderData
+    type BBlockHeader (MainBlockchain v) = BlockHeader
+    type ExtraHeaderData (MainBlockchain v) = MainExtraHeaderData
 
     -- | In our cryptocurrency, body consists of payloads of all block
     -- components.
-    data Body MainBlockchain = MainBody
+    data Body (MainBlockchain v) = MainBody
         { -- | Txp payload.
           _mbTxPayload :: !TxPayload
         , -- | Ssc payload.
@@ -75,8 +75,8 @@ instance ( HasConfiguration
         , _mbUpdatePayload :: !UpdatePayload
         } deriving (Eq, Show, Generic, Typeable)
 
-    type ExtraBodyData MainBlockchain = MainExtraBodyData
-    type BBlock MainBlockchain = Block
+    type ExtraBodyData (MainBlockchain v) = MainExtraBodyData
+    type BBlock (MainBlockchain v) = Block
 
     mkBodyProof MainBody{..} =
         MainProof
@@ -89,10 +89,10 @@ instance ( HasConfiguration
 deriving instance Show MainToSign
 deriving instance Eq MainToSign
 
-instance Buildable (BodyProof MainBlockchain) where
+instance Buildable (BodyProof (MainBlockchain v)) where
     build = genericF
 
-instance NFData (BodyProof MainBlockchain)
-instance NFData (ConsensusData MainBlockchain)
-instance NFData (Body MainBlockchain)
-instance NFData MainBlock
+instance NFData (BodyProof (MainBlockchain v))
+instance NFData (ConsensusData (MainBlockchain v))
+instance NFData (Body (MainBlockchain v))
+instance NFData (MainBlock v)

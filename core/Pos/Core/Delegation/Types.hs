@@ -2,8 +2,11 @@
 
 module Pos.Core.Delegation.Types
        (
-         ProxySigLight
+         LightDlgIndices (..)
+       , ProxySigLight
        , ProxySKLight
+
+       , HeavyDlgIndex (..)
        , ProxySigHeavy
        , ProxySKHeavy
 
@@ -14,8 +17,8 @@ import           Universum
 
 import           Data.Default (Default (def))
 import qualified Data.Text.Buildable
-import           Formatting (bprint, int, (%))
-import           Serokell.Util (listJson)
+import           Formatting (bprint, build, int, (%))
+import           Serokell.Util (listJson, pairF)
 
 import           Pos.Core.Slotting.Types (EpochIndex)
 import           Pos.Crypto (ProxySecretKey (..), ProxySignature)
@@ -28,22 +31,44 @@ import           Pos.Crypto (ProxySecretKey (..), ProxySignature)
 -- be reworked later. Though some parts of it are left to support
 -- backward compatibility.
 
--- | Proxy signature, that holds a pair of epoch indices. Block is
--- valid if its epoch index is inside this range.
-type ProxySigLight a = ProxySignature (EpochIndex, EpochIndex) a
+-- | Pair of indices for light delegation PSK that define start and
+-- end epoch of cert usage. Block is valid if its epoch index is
+-- inside this range.
+data LightDlgIndices =
+    LightDlgIndices { getLightDlgIndices :: (EpochIndex, EpochIndex) }
+    deriving (Show, Eq, Generic)
+
+instance NFData LightDlgIndices
+
+instance Buildable LightDlgIndices where
+    build (LightDlgIndices p) = bprint pairF p
+
+-- | Light delegation proxy signature, that holds a pair of epoch
+-- indices.
+type ProxySigLight v a = ProxySignature v LightDlgIndices a
 
 -- | Same alias for the proxy secret key (see 'ProxySigLight').
-type ProxySKLight = ProxySecretKey (EpochIndex, EpochIndex)
+type ProxySKLight v = ProxySecretKey v LightDlgIndices
 
 
--- | Simple proxy signature without ttl/epoch index
--- constraints. 'EpochIndex' inside is needed for replay attack
--- prevention (it should match epoch of the block psk is announced
+-- | Witness for heavy delegation signature -- epoch in which
+-- certificate starts being active. It is needed for replay attack
+-- prevention (index should match epoch of the block PSK is announced
 -- in).
-type ProxySigHeavy a = ProxySignature EpochIndex a
+data HeavyDlgIndex =
+    HeavyDlgIndex { getHeavyDlgIndex :: EpochIndex }
+    deriving (Show, Eq, Generic)
 
--- | Heavy delegation psk.
-type ProxySKHeavy = ProxySecretKey EpochIndex
+instance NFData HeavyDlgIndex
+
+instance Buildable HeavyDlgIndex where
+    build (HeavyDlgIndex i) = bprint build i
+
+-- | Simple proxy signature without ttl/epoch index constraints.
+type ProxySigHeavy v a = ProxySignature v HeavyDlgIndex a
+
+-- | Heavy delegation PSK.
+type ProxySKHeavy v = ProxySecretKey v HeavyDlgIndex
 
 ----------------------------------------------------------------------------
 -- Payload
@@ -55,14 +80,14 @@ type ProxySKHeavy = ProxySecretKey EpochIndex
 -- (comparing by issuer) in this list. The order of PSKs doesn't
 -- matter, as it's checked for cycles after bulk application. So it's
 -- technically a set.
-newtype DlgPayload = UnsafeDlgPayload
-    { getDlgPayload :: [ProxySKHeavy]
+newtype DlgPayload v = UnsafeDlgPayload
+    { getDlgPayload :: [ProxySKHeavy v]
     } deriving (Show, Eq, Generic, NFData)
 
-instance Default DlgPayload where
+instance Default (DlgPayload v) where
     def = UnsafeDlgPayload []
 
-instance Buildable DlgPayload where
+instance Buildable (DlgPayload v) where
     build (UnsafeDlgPayload psks) =
         bprint
             ("proxy signing keys ("%int%" items): "%listJson%"\n")

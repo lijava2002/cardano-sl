@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+
 -- | Delegation types serialization.
 
 module Pos.Binary.Core.Delegation
@@ -7,10 +9,16 @@ module Pos.Binary.Core.Delegation
 import           Universum
 
 import           Pos.Binary.Class (Bi (..))
+import           Pos.Binary.Core.Slotting ()
 import           Pos.Binary.Crypto ()
-import           Pos.Core.Configuration (HasConfiguration)
-import           Pos.Core.Delegation (DlgPayload (..))
+--import           Pos.Core.Configuration (HasConfiguration)
+import           Pos.Core.Delegation (DlgPayload (..), HeavyDlgIndex (..))
+import           Pos.Util.Verification (Ver (..))
 
-instance HasConfiguration => Bi DlgPayload where
+instance Bi (HeavyDlgIndex) where
+    encode = encode . getHeavyDlgIndex
+    decode = HeavyDlgIndex <$> decode
+
+instance Bi (DlgPayload 'Unver) where
     encode = encode . getDlgPayload
     decode = UnsafeDlgPayload <$> decode

@@ -10,7 +10,7 @@ import           Pos.Binary.Class (Bi (..), Cons (..), Field (..), deriveSimpleB
                                    enforceSize)
 import           Pos.Binary.Core.Txp ()
 import qualified Pos.Core.Block.Blockchain as Core
-import qualified Pos.Core.Block.Genesis.Chain as BC
+--import qualified Pos.Core.Block.Genesis.Chain as BC
 import qualified Pos.Core.Block.Genesis.Types as BC
 import qualified Pos.Core.Block.Main.Chain as BC
 import qualified Pos.Core.Block.Main.Types as BC

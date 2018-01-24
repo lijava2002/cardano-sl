@@ -27,22 +27,21 @@ import           Pos.Util.Some (Some)
 ----------------------------------------------------------------------------
 
 -- | Either header of ordinary main block or genesis block.
-type BlockHeader = Either GenesisBlockHeader MainBlockHeader
+type BlockHeader v = Either (GenesisBlockHeader v) (MainBlockHeader v)
 
 -- | Block.
-type Block = Either GenesisBlock MainBlock
+type Block v = Either (GenesisBlock v) (MainBlock v)
 
 -- | Representation of 'Block' passed to a component.
-data ComponentBlock payload =
-    ComponentBlockGenesis (Some IsGenesisHeader)
-    | ComponentBlockMain
-       { bcmHeader  :: !(Some IsMainHeader)
-       , bcmPayload :: !payload }
+data ComponentBlock payload
+    = ComponentBlockGenesis (Some IsGenesisHeader)
+    | ComponentBlockMain { bcmHeader  :: !(Some IsMainHeader)
+                         , bcmPayload :: !payload }
 
 -- | This function is required because type inference fails in attempts to
 -- hash only @Right@ or @Left@.
 --
 -- Perhaps, it shouldn't be here, but I decided not to create a module
 -- for only this function.
-blockHeaderHash :: Bi BlockHeader => BlockHeader -> HeaderHash
+blockHeaderHash :: Bi (BlockHeader v) => BlockHeader v -> HeaderHash
 blockHeaderHash = unsafeHash

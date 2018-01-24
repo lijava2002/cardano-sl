@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+
 -- | Signing done with public/private keys.
 
 module Pos.Crypto.Signing.Signing
@@ -19,10 +21,10 @@ module Pos.Crypto.Signing.Signing
        , checkSigRaw                   -- reexport
 
        -- * Proxy signature scheme
-       , verifyProxyCert               -- reexport
+       , toVerPsk                      -- reexport
+       , toVerProxySignature           -- reexport
        , fullProxyCertHexF
        , parseFullProxyCert
-       , validateProxySecretKey        -- reexport
        , proxySign
        , proxyVerify
 
@@ -43,11 +45,11 @@ import           Pos.Binary.Class (Bi, Raw)
 import qualified Pos.Binary.Class as Bi
 import           Pos.Binary.Crypto ()
 import           Pos.Crypto.Configuration (HasCryptoConfiguration)
-import           Pos.Crypto.Signing.Check (checkSig, checkSigRaw, validateProxySecretKey,
-                                           verifyProxyCert)
+import           Pos.Crypto.Signing.Check (checkSig, checkSigRaw, toVerProxySignature, toVerPsk)
 import           Pos.Crypto.Signing.Tag (signTag)
 import           Pos.Crypto.Signing.Types.Signing
 import           Pos.Crypto.Signing.Types.Tag (SignTag)
+import           Pos.Util.Verification (Ver (..))
 
 ----------------------------------------------------------------------------
 -- Keys, key generation & printing & decoding
@@ -139,14 +141,14 @@ parseFullProxyCert s = do
 -- of this function.
 proxySign
     :: (HasCryptoConfiguration, Bi a)
-    => SignTag -> SecretKey -> ProxySecretKey w -> a -> ProxySignature w a
+    => SignTag -> SecretKey -> ProxySecretKey 'Ver w -> a -> ProxySignature 'Ver w a
 proxySign t sk@(SecretKey delegateSk) psk m
     | toPublic sk /= pskDelegatePk psk =
         error $ sformat ("proxySign called with irrelevant certificate "%
                          "(psk delegatePk: "%build%", real delegate pk: "%build%")")
                         (pskDelegatePk psk) (toPublic sk)
     | otherwise =
-        ProxySignature
+        UnsafeProxySignature
         { psigPsk = psk
         , psigSig = sigma
         }
@@ -164,13 +166,14 @@ proxySign t sk@(SecretKey delegateSk) psk m
 -- space predicate and message itself.
 proxyVerify
     :: (HasCryptoConfiguration, Bi w, Bi a)
-    => SignTag -> ProxySignature w a -> (w -> Bool) -> a -> Bool
-proxyVerify t ProxySignature{..} omegaPred m =
-    predCorrect && sigValid
+    => SignTag -> ProxySignature 'Ver w a -> (w -> Bool) -> a -> Bool
+proxyVerify t psig omegaPred m =
+    and [predCorrect, sigValid]
   where
-    PublicKey issuerPk = pskIssuerPk psigPsk
-    PublicKey pdDelegatePkRaw = pskDelegatePk psigPsk
-    predCorrect = omegaPred (pskOmega psigPsk)
+    psk = psigPsk psig
+    PublicKey issuerPk = pskIssuerPk psk
+    PublicKey pdDelegatePkRaw = pskDelegatePk psk
+    predCorrect = omegaPred (pskOmega psk)
     sigValid =
         CC.verify
             pdDelegatePkRaw
@@ -180,4 +183,4 @@ proxyVerify t ProxySignature{..} omegaPred m =
                  , signTag t
                  , Bi.serialize' m
                  ])
-            psigSig
+            (psigSig psig)

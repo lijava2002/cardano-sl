@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds    #-}
 {-# LANGUAGE TypeFamilies #-}
 
 -- | Types related to genesis core data.
@@ -41,6 +42,7 @@ import           Pos.Core.Ssc.Types (VssCertificatesMap, getVssCertificatesMap)
 import           Pos.Core.Update.Types (BlockVersionData)
 import           Pos.Crypto.Configuration (ProtocolMagic)
 import           Pos.Crypto.Signing (RedeemPublicKey)
+import           Pos.Util.Verification (Ver (..))
 
 -- | Wrapper around weighted stakeholders map to be used in genesis
 -- core data.
@@ -75,10 +77,10 @@ instance Buildable GenesisVssCertificatesMap where
 -- 3. Delegates can't be issuers, i. e. transitive delegation is not supported.
 --    It's not needed in genesis, it can always be reduced.
 newtype GenesisDelegation = UnsafeGenesisDelegation
-    { unGenesisDelegation :: HashMap StakeholderId ProxySKHeavy
+    { unGenesisDelegation :: HashMap StakeholderId (ProxySKHeavy 'Ver)
     } deriving (Show, Eq, ToList, Container)
 
-type instance Element GenesisDelegation = ProxySKHeavy
+type instance Element GenesisDelegation = ProxySKHeavy 'Ver
 
 -- | Empty 'GenesisDelegation'.
 noGenesisDelegation :: GenesisDelegation
