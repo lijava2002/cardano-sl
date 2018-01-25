@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds     #-}
 {-# LANGUAGE TypeOperators #-}
 
 -- | Miscellaneous instances, etc. Related to the genesis blockchain of course.
@@ -25,12 +26,13 @@ import           Pos.Core.Class (HasDifficulty (..), HasEpochIndex (..), HasEpoc
 import           Pos.Core.Common (HeaderHash)
 import           Pos.Core.Slotting.Types (EpochOrSlot (..))
 import           Pos.Crypto (hashHexF)
+import           Pos.Util.Verification (Ver (..))
 
 ----------------------------------------------------------------------------
 -- Buildable
 ----------------------------------------------------------------------------
 
-instance Bi BlockHeader => Buildable GenesisBlockHeader where
+instance Bi (BlockHeader v) => Buildable (GenesisBlockHeader v) where
     build gbh@UnsafeGenericBlockHeader {..} =
         bprint
             ("GenesisBlockHeader:\n"%
@@ -48,7 +50,7 @@ instance Bi BlockHeader => Buildable GenesisBlockHeader where
         gbhHeaderHash = blockHeaderHash $ Left gbh
         GenesisConsensusData {..} = _gbhConsensus
 
-instance Bi BlockHeader => Buildable GenesisBlock where
+instance Bi (BlockHeader v) => Buildable (GenesisBlock v) where
     build UnsafeGenericBlock {..} =
         bprint
             (stext%":\n"%
@@ -68,38 +70,38 @@ instance Bi BlockHeader => Buildable GenesisBlock where
 -- Pos.Core.Class
 ----------------------------------------------------------------------------
 
-instance HasEpochIndex GenesisBlock where
+instance HasEpochIndex (GenesisBlock v) where
     epochIndexL = gbHeader . gbhConsensus . gcdEpoch
 
-instance HasEpochIndex GenesisBlockHeader where
+instance HasEpochIndex (GenesisBlockHeader v) where
     epochIndexL = gbhConsensus . gcdEpoch
 
-instance HasEpochOrSlot GenesisBlockHeader where
+instance HasEpochOrSlot (GenesisBlockHeader v) where
     getEpochOrSlot = EpochOrSlot . Left . _gcdEpoch . _gbhConsensus
 
-instance HasEpochOrSlot GenesisBlock where
+instance HasEpochOrSlot (GenesisBlock v) where
     getEpochOrSlot = getEpochOrSlot . _gbHeader
 
 -- NB. it's not a mistake that these instances require @Bi BlockHeader@
 -- instead of @Bi GenesisBlockHeader@. We compute header's hash by
 -- converting it to a BlockHeader first.
 
-instance Bi BlockHeader =>
-         HasHeaderHash GenesisBlockHeader where
+instance Bi (BlockHeader v) =>
+         HasHeaderHash (GenesisBlockHeader v) where
     headerHash = blockHeaderHash . Left
 
-instance Bi BlockHeader =>
-         HasHeaderHash GenesisBlock where
+instance Bi (BlockHeader v) =>
+         HasHeaderHash (GenesisBlock v) where
     headerHash = blockHeaderHash . Left . _gbHeader
 
-instance HasDifficulty (ConsensusData GenesisBlockchain) where
+instance HasDifficulty (ConsensusData (GenesisBlockchain v)) where
     difficultyL = gcdDifficulty
 
-instance HasDifficulty GenesisBlockHeader where
+instance HasDifficulty (GenesisBlockHeader v) where
     difficultyL = gbhConsensus . difficultyL
 
-instance HasDifficulty GenesisBlock where
+instance HasDifficulty (GenesisBlock v) where
     difficultyL = gbHeader . difficultyL
 
-instance Bi BlockHeader => IsHeader GenesisBlockHeader
-instance Bi BlockHeader => IsGenesisHeader GenesisBlockHeader
+instance Bi (BlockHeader v) => IsHeader (GenesisBlockHeader v)
+instance Bi (BlockHeader v) => IsGenesisHeader (GenesisBlockHeader v)

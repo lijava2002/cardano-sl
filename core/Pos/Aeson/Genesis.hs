@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+
 -- | Aeson instances for GenesisSpec and related datatypes.
 
 module Pos.Aeson.Genesis
@@ -37,6 +39,7 @@ import           Pos.Core.Genesis.Types (FakeAvvmOptions, GenesisAvvmBalances (.
 import           Pos.Core.Ssc (VssCertificatesMap (..), validateVssCertificatesMap)
 import           Pos.Crypto (RedeemPublicKey, fromAvvmPk)
 import           Pos.Util.Util (toAesonError)
+import           Pos.Util.Verification (Ver (..))
 
 instance FromJSONKey RedeemPublicKey where
     fromJSONKey = FromJSONKeyTextParser fromAvvmPk
@@ -57,7 +60,7 @@ instance FromJSON GenesisVssCertificatesMap where
 
 instance FromJSON GenesisDelegation where
     parseJSON = parseJSON >=> \v -> do
-        (elems :: HashMap StakeholderId ProxySKHeavy) <- mapM parseJSON v
+        (elems :: HashMap StakeholderId (ProxySKHeavy 'Ver)) <- mapM parseJSON v
         toAesonError $ recreateGenesisDelegation elems
 
 deriveFromJSON defaultOptions ''FakeAvvmOptions

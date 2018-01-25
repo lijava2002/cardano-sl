@@ -34,7 +34,7 @@ import           Pos.Core.Slotting.Types (EpochOrSlot (..), slotIdF)
 import           Pos.Crypto (hashHexF)
 
 
-instance Bi BlockHeader => Buildable MainBlockHeader where
+instance Bi (BlockHeader v) => Buildable (MainBlockHeader v) where
     build gbh@UnsafeGenericBlockHeader {..} =
         bprint
             ("MainBlockHeader:\n"%
@@ -58,7 +58,7 @@ instance Bi BlockHeader => Buildable MainBlockHeader where
         gbhHeaderHash = blockHeaderHash $ Right gbh
         MainConsensusData {..} = _gbhConsensus
 
-instance (HasConfiguration, Bi BlockHeader) => Buildable MainBlock where
+instance (HasConfiguration, Bi (BlockHeader v)) => Buildable (MainBlock v) where
     build UnsafeGenericBlock {..} =
         bprint
             (stext%":\n"%
@@ -81,37 +81,37 @@ instance (HasConfiguration, Bi BlockHeader) => Buildable MainBlock where
         MainBody {..} = _gbBody
         txs = _gbBody ^. mbTxs
 
-instance HasEpochIndex MainBlock where
+instance HasEpochIndex (MainBlock v) where
     epochIndexL = mainBlockSlot . epochIndexL
 
-instance HasEpochIndex MainBlockHeader where
+instance HasEpochIndex (MainBlockHeader v) where
     epochIndexL = mainHeaderSlot . epochIndexL
 
-instance HasEpochOrSlot MainBlockHeader where
+instance HasEpochOrSlot (MainBlockHeader v) where
     getEpochOrSlot = EpochOrSlot . Right . view mainHeaderSlot
 
-instance HasEpochOrSlot MainBlock where
+instance HasEpochOrSlot (MainBlock v) where
     getEpochOrSlot = getEpochOrSlot . _gbHeader
 
 -- NB. it's not a mistake that these instances require @Bi BlockHeader@
 -- instead of @Bi MainBlockHeader@. We compute header's hash by
 -- converting it to a BlockHeader first.
 
-instance Bi BlockHeader =>
-         HasHeaderHash MainBlockHeader where
+instance Bi (BlockHeader v) =>
+         HasHeaderHash (MainBlockHeader v) where
     headerHash = blockHeaderHash . Right
 
-instance Bi BlockHeader =>
-         HasHeaderHash MainBlock where
+instance Bi (BlockHeader v) =>
+         HasHeaderHash (MainBlock v) where
     headerHash = blockHeaderHash . Right . _gbHeader
 
-instance HasDifficulty (ConsensusData MainBlockchain) where
+instance HasDifficulty (ConsensusData (MainBlockchain v)) where
     difficultyL = mcdDifficulty
 
-instance HasDifficulty MainBlockHeader where
+instance HasDifficulty (MainBlockHeader v) where
     difficultyL = mainHeaderDifficulty
 
-instance HasDifficulty MainBlock where
+instance HasDifficulty (MainBlock v) where
     difficultyL = mainBlockDifficulty
 
 instance HasBlockVersion MainExtraHeaderData where
@@ -120,20 +120,20 @@ instance HasBlockVersion MainExtraHeaderData where
 instance HasSoftwareVersion MainExtraHeaderData where
     softwareVersionL = mehSoftwareVersion
 
-instance HasBlockVersion MainBlock where
+instance HasBlockVersion (MainBlock v) where
     blockVersionL = mainBlockBlockVersion
 
-instance HasSoftwareVersion MainBlock where
+instance HasSoftwareVersion (MainBlock v) where
     softwareVersionL = mainBlockSoftwareVersion
 
-instance HasBlockVersion MainBlockHeader where
+instance HasBlockVersion (MainBlockHeader v) where
     blockVersionL = mainHeaderBlockVersion
 
-instance HasSoftwareVersion MainBlockHeader where
+instance HasSoftwareVersion (MainBlockHeader v) where
     softwareVersionL = mainHeaderSoftwareVersion
 
-instance Bi BlockHeader => IsHeader MainBlockHeader
+instance Bi (BlockHeader v) => IsHeader (MainBlockHeader v)
 
-instance Bi BlockHeader => IsMainHeader MainBlockHeader where
+instance Bi (BlockHeader v) => IsMainHeader (MainBlockHeader v) where
     headerSlotL = mainHeaderSlot
     headerLeaderKeyL = mainHeaderLeaderKey
