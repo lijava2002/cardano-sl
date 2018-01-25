@@ -26,24 +26,24 @@ import           Pos.Core.Block.Union.Types (Block, BlockHeader, BlockSignature 
 import           Pos.Core.Class (IsMainHeader (..))
 import           Pos.Core.Common (ChainDifficulty)
 import           Pos.Core.Configuration (HasConfiguration)
-import           Pos.Core.Delegation (DlgPayload)
+import           Pos.Core.Delegation (DlgPayload, DlgProof, mkDlgProof)
 import           Pos.Core.Slotting.Types (SlotId (..))
 import           Pos.Core.Ssc (SscPayload, SscProof, mkSscProof)
 import           Pos.Core.Txp (TxPayload, TxProof, mkTxProof)
 import           Pos.Core.Update (UpdatePayload, UpdateProof, mkUpdateProof)
-import           Pos.Crypto (Hash, PublicKey, hash)
+import           Pos.Crypto (PublicKey)
 
 instance ( HasConfiguration
-         , Bi BlockHeader
-         , Bi (BodyProof MainBlockchain)
-         , IsMainHeader (GenericBlockHeader MainBlockchain)) =>
+         , Bi (BlockHeader v)
+         , Bi (BodyProof (MainBlockchain v))
+         , IsMainHeader (GenericBlockHeader (MainBlockchain v))) =>
          Blockchain (MainBlockchain v) where
 
     -- | Proof of everything contained in the payload.
     data BodyProof (MainBlockchain v) = MainProof
         { mpTxProof       :: !TxProof
         , mpMpcProof      :: !SscProof
-        , mpProxySKsProof :: !(Hash (DlgPayload v))
+        , mpProxySKsProof :: !DlgProof
         , mpUpdateProof   :: !UpdateProof
         } deriving (Eq, Show, Generic)
 
@@ -56,10 +56,10 @@ instance ( HasConfiguration
         , -- | Difficulty of chain ending in this block.
           _mcdDifficulty :: !ChainDifficulty
         , -- | Signature given by slot leader.
-          _mcdSignature  :: !BlockSignature
+          _mcdSignature  :: !(BlockSignature v)
         } deriving (Generic, Show, Eq)
 
-    type BBlockHeader (MainBlockchain v) = BlockHeader
+    type BBlockHeader (MainBlockchain v) = BlockHeader v
     type ExtraHeaderData (MainBlockchain v) = MainExtraHeaderData
 
     -- | In our cryptocurrency, body consists of payloads of all block
@@ -70,24 +70,24 @@ instance ( HasConfiguration
         , -- | Ssc payload.
           _mbSscPayload :: !SscPayload
         , -- | Heavyweight delegation payload (no-ttl certificates).
-          _mbDlgPayload :: !DlgPayload
+          _mbDlgPayload :: !(DlgPayload v)
           -- | Additional update information for the update system.
         , _mbUpdatePayload :: !UpdatePayload
         } deriving (Eq, Show, Generic, Typeable)
 
     type ExtraBodyData (MainBlockchain v) = MainExtraBodyData
-    type BBlock (MainBlockchain v) = Block
+    type BBlock (MainBlockchain v) = Block v
 
     mkBodyProof MainBody{..} =
         MainProof
         { mpTxProof = mkTxProof _mbTxPayload
         , mpMpcProof = mkSscProof _mbSscPayload
-        , mpProxySKsProof = hash _mbDlgPayload
+        , mpProxySKsProof = mkDlgProof _mbDlgPayload
         , mpUpdateProof = mkUpdateProof _mbUpdatePayload
         }
 
-deriving instance Show MainToSign
-deriving instance Eq MainToSign
+deriving instance Show (MainToSign v)
+deriving instance Eq (MainToSign v)
 
 instance Buildable (BodyProof (MainBlockchain v)) where
     build = genericF
