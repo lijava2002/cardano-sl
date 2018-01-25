@@ -7313,8 +7313,8 @@ inherit (pkgs) mesa;};
         ({ mkDerivation, aeson, base, base64-bytestring, bytestring
          , cardano-report-server, cardano-sl-binary, cardano-sl-core
          , cardano-sl-crypto, cardano-sl-db, cardano-sl-networking
-         , cardano-sl-util, conduit, containers, cpphs, directory, dns
-         , ekg-core, ether, exceptions, filepath, formatting
+         , cardano-sl-util, conduit, containers, cpphs, data-default
+         , directory, dns, ekg-core, ether, exceptions, filepath, formatting
          , generic-arbitrary, hashable, http-client, http-client-tls
          , iproute, kademlia, lens, log-warper, lzma-conduit, monad-control
          , mtl, network-info, network-transport, network-transport-tcp
@@ -7330,14 +7330,14 @@ inherit (pkgs) mesa;};
            libraryHaskellDepends = [
              aeson base base64-bytestring bytestring cardano-report-server
              cardano-sl-binary cardano-sl-core cardano-sl-crypto cardano-sl-db
-             cardano-sl-networking cardano-sl-util conduit containers directory
-             dns ekg-core ether exceptions filepath formatting generic-arbitrary
-             hashable http-client http-client-tls iproute kademlia lens
-             log-warper lzma-conduit monad-control mtl network-info
-             network-transport network-transport-tcp optparse-applicative parsec
-             QuickCheck reflection safe-exceptions serokell-util stm tagged tar
-             text text-format time time-units transformers universum unix
-             unordered-containers yaml
+             cardano-sl-networking cardano-sl-util conduit containers
+             data-default directory dns ekg-core ether exceptions filepath
+             formatting generic-arbitrary hashable http-client http-client-tls
+             iproute kademlia lens log-warper lzma-conduit monad-control mtl
+             network-info network-transport network-transport-tcp
+             optparse-applicative parsec QuickCheck reflection safe-exceptions
+             serokell-util stm tagged tar text text-format time time-units
+             transformers universum unix unordered-containers yaml
            ];
            libraryToolDepends = [ cpphs ];
            doHaddock = false;

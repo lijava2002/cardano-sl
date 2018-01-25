@@ -9,6 +9,7 @@ import           Universum
 import           Control.Concurrent.STM (readTVar)
 import           Control.Lens (at, each, partsOf, to, views)
 import           Control.Monad.Except (runExceptT)
+import           Data.Default (def)
 import qualified Data.HashMap.Strict as HM
 import qualified Data.List.NonEmpty as NE
 import           Data.Tagged (Tagged)
@@ -90,7 +91,7 @@ shouldParticipate epoch = do
 onNewSlotSsc
     :: (SscMessageConstraints m, SscMode ctx m)
     => (WorkerSpec m, OutSpecs)
-onNewSlotSsc = onNewSlotWorker True outs $ \slotId sendActions ->
+onNewSlotSsc = onNewSlotWorker def outs $ \slotId sendActions ->
     recoveryCommGuard "onNewSlot worker in SSC" $ do
         sscGarbageCollectLocalData slotId
         whenM (shouldParticipate $ siEpoch slotId) $ do
@@ -402,7 +403,7 @@ checkForIgnoredCommitmentsWorker
     => (WorkerSpec m, OutSpecs)
 checkForIgnoredCommitmentsWorker = localWorker $ do
     counter <- newTVarIO 0
-    onNewSlot True (checkForIgnoredCommitmentsWorkerImpl counter)
+    onNewSlot def (checkForIgnoredCommitmentsWorkerImpl counter)
 
 -- This worker checks whether our commitments appear in blocks. This check
 -- is done only if we actually should participate in SSC. It's triggered if
